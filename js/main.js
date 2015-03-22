@@ -1,34 +1,44 @@
 'use strict';
 
+var sendChannel;
+var sendButton = document.getElementById("sendButton");
+var sendTextarea = document.getElementById("dataChannelSend");
+var receiveTextarea = document.getElementById("dataChannelReceive");
+
+sendButton.onclick = sendData;
+
 var isChannelReady;
-var isInitiator = false;
-var isStarted = false;
+var isInitiator;
+var isStarted;
 var localStream;
 var pc;
 var remoteStream;
 var turnReady;
 
-var pc_config = {'iceServers': [
-  {'url': 'stun:inspire.mozilla.com.tw:3478'},
-  {'url': 'stun:stun.l.google.com:19302'}
-]};
+var pc_config = webrtcDetectedBrowser === 'firefox' ?
+  {'iceServers':[{'url': 'stun:10.247.24.73:3478'}, {'url':'stun:23.21.150.121'}]} : // number IP
+  {'iceServers': [{'url': 'stun:inspire.mozilla.com.tw:3478'}, {'url': 'stun:stun.l.google.com:19302'}]};
 
-var pc_constraints = {'optional': [{'DtlsSrtpKeyAgreement': true}]};
+var pc_constraints = {
+  'optional': [
+    {'DtlsSrtpKeyAgreement': true},
+    {'RtpDataChannels': true}
+  ]};
 
 // Set up audio and video regardless of what devices are present.
 var sdpConstraints = {'mandatory': {
-  'OfferToReceiveAudio':false,
+  'OfferToReceiveAudio':true,
   'OfferToReceiveVideo':true }};
 
 /////////////////////////////////////////////
 
-var room = location.pathname.substring(1);
-if (room === '') {
+//var room = location.pathname.substring(1);
+//if (room === '') {
 //  room = prompt('Enter room name:');
-  room = 'foo';
-} else {
+  var room = 'foo';
+//} else {
   //
-}
+//}
 
 var socket = io.connect();
 
@@ -64,15 +74,12 @@ socket.on('log', function (array){
 ////////////////////////////////////////////////
 
 function sendMessage(message){
-	console.log('Client sending message: ', message);
-  // if (typeof message === 'object') {
-  //   message = JSON.stringify(message);
-  // }
+	console.log('Sending message: ', message);
   socket.emit('message', message);
 }
 
 socket.on('message', function (message){
-  console.log('Client received message:', message);
+  console.log('Received message:', message);
   if (message === 'got user media') {
   	maybeStart();
   } else if (message.type === 'offer') {
@@ -84,10 +91,8 @@ socket.on('message', function (message){
   } else if (message.type === 'answer' && isStarted) {
     pc.setRemoteDescription(new RTCSessionDescription(message));
   } else if (message.type === 'candidate' && isStarted) {
-    var candidate = new RTCIceCandidate({
-      sdpMLineIndex: message.label,
-      candidate: message.candidate
-    });
+    var candidate = new RTCIceCandidate({sdpMLineIndex:message.label,
+      candidate:message.candidate});
     pc.addIceCandidate(candidate);
   } else if (message === 'bye' && isStarted) {
     handleRemoteHangup();
@@ -100,9 +105,9 @@ var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 
 function handleUserMedia(stream) {
-  console.log('Adding local stream.');
-  localVideo.src = window.URL.createObjectURL(stream);
   localStream = stream;
+  attachMediaStream(localVideo, stream);
+  console.log('Adding local stream.');
   sendMessage('got user media');
   if (isInitiator) {
     maybeStart();
@@ -114,21 +119,19 @@ function handleUserMediaError(error){
 }
 
 var constraints = {video: true};
-getUserMedia(constraints, handleUserMedia, handleUserMediaError);
 
+getUserMedia(constraints, handleUserMedia, handleUserMediaError);
 console.log('Getting user media with constraints', constraints);
 
 if (location.hostname != "localhost") {
-  //requestTurn('https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913');
   requestTurn('http://inspire.mozilla.com.tw:8765/?service=turn&username=root&key=0d2d014fc0a8920418c2dba8f965a685');
 }
 
 function maybeStart() {
-  if (!isStarted && typeof localStream != 'undefined' && isChannelReady) {
+  if (!isStarted && localStream && isChannelReady) {
     createPeerConnection();
     pc.addStream(localStream);
     isStarted = true;
-    console.log('isInitiator', isInitiator);
     if (isInitiator) {
       doCall();
     }
@@ -143,15 +146,98 @@ window.onbeforeunload = function(e){
 
 function createPeerConnection() {
   try {
-    pc = new RTCPeerConnection(null);
+    pc = new RTCPeerConnection(pc_config, pc_constraints);
     pc.onicecandidate = handleIceCandidate;
-    pc.onaddstream = handleRemoteStreamAdded;
-    pc.onremovestream = handleRemoteStreamRemoved;
-    console.log('Created RTCPeerConnnection');
+    console.log('Created RTCPeerConnnection with:\n' +
+      '  config: \'' + JSON.stringify(pc_config) + '\';\n' +
+      '  constraints: \'' + JSON.stringify(pc_constraints) + '\'.');
   } catch (e) {
     console.log('Failed to create PeerConnection, exception: ' + e.message);
     alert('Cannot create RTCPeerConnection object.');
       return;
+  }
+  pc.onaddstream = handleRemoteStreamAdded;
+  pc.onremovestream = handleRemoteStreamRemoved;
+
+  if (isInitiator) {
+    try {
+      // Reliable Data Channels not yet supported in Chrome
+      sendChannel = pc.createDataChannel("sendDataChannel",
+        {reliable: false});
+      sendChannel.onmessage = handleMessage;
+      trace('Created send data channel');
+    } catch (e) {
+      alert('Failed to create data channel. ' +
+            'You need Chrome M25 or later with RtpDataChannel enabled');
+      trace('createDataChannel() failed with exception: ' + e.message);
+    }
+    sendChannel.onopen = handleSendChannelStateChange;
+    sendChannel.onclose = handleSendChannelStateChange;
+  } else {
+    pc.ondatachannel = gotReceiveChannel;
+  }
+}
+
+function sendData() {
+  var data = sendTextarea.value;
+  sendChannel.send(data);
+  trace('Sent data: ' + data);
+}
+
+// function closeDataChannels() {
+//   trace('Closing data channels');
+//   sendChannel.close();
+//   trace('Closed data channel with label: ' + sendChannel.label);
+//   receiveChannel.close();
+//   trace('Closed data channel with label: ' + receiveChannel.label);
+//   localPeerConnection.close();
+//   remotePeerConnection.close();
+//   localPeerConnection = null;
+//   remotePeerConnection = null;
+//   trace('Closed peer connections');
+//   startButton.disabled = false;
+//   sendButton.disabled = true;
+//   closeButton.disabled = true;
+//   dataChannelSend.value = "";
+//   dataChannelReceive.value = "";
+//   dataChannelSend.disabled = true;
+//   dataChannelSend.placeholder = "Press Start, enter some text, then press Send.";
+// }
+
+function gotReceiveChannel(event) {
+  trace('Receive Channel Callback');
+  sendChannel = event.channel;
+  sendChannel.onmessage = handleMessage;
+  sendChannel.onopen = handleReceiveChannelStateChange;
+  sendChannel.onclose = handleReceiveChannelStateChange;
+}
+
+function handleMessage(event) {
+  trace('Received message: ' + event.data);
+  receiveTextarea.value = event.data;
+}
+
+function handleSendChannelStateChange() {
+  var readyState = sendChannel.readyState;
+  trace('Send channel state is: ' + readyState);
+  enableMessageInterface(readyState == "open");
+}
+
+function handleReceiveChannelStateChange() {
+  var readyState = sendChannel.readyState;
+  trace('Receive channel state is: ' + readyState);
+  enableMessageInterface(readyState == "open");
+}
+
+function enableMessageInterface(shouldEnable) {
+  if (shouldEnable) {
+    dataChannelSend.disabled = false;
+    dataChannelSend.focus();
+    dataChannelSend.placeholder = "";
+    sendButton.disabled = false;
+  } else {
+    dataChannelSend.disabled = true;
+    sendButton.disabled = true;
   }
 }
 
@@ -168,19 +254,20 @@ function handleIceCandidate(event) {
   }
 }
 
-function handleRemoteStreamAdded(event) {
-  console.log('Remote stream added.');
-  remoteVideo.src = window.URL.createObjectURL(event.stream);
-  remoteStream = event.stream;
-}
-
-function handleCreateOfferError(event){
-  console.log('createOffer() error: ', e);
-}
-
 function doCall() {
-  console.log('Sending offer to peer');
-  pc.createOffer(setLocalAndSendMessage, handleCreateOfferError);
+  var constraints = {'optional': [], 'mandatory': {'MozDontOfferDataChannel': true}};
+  // temporary measure to remove Moz* constraints in Chrome
+  if (webrtcDetectedBrowser === 'chrome') {
+    for (var prop in constraints.mandatory) {
+      if (prop.indexOf('Moz') !== -1) {
+        delete constraints.mandatory[prop];
+      }
+     }
+   }
+  constraints = mergeConstraints(constraints, sdpConstraints);
+  console.log('Sending offer to peer, with constraints: \n' +
+    '  \'' + JSON.stringify(constraints) + '\'.');
+  pc.createOffer(setLocalAndSendMessage, null, constraints);
 }
 
 function doAnswer() {
@@ -192,11 +279,19 @@ function onPeerConnectionError(err) {
   console.error(err);
 }
 
+function mergeConstraints(cons1, cons2) {
+  var merged = cons1;
+  for (var name in cons2.mandatory) {
+    merged.mandatory[name] = cons2.mandatory[name];
+  }
+  merged.optional.concat(cons2.optional);
+  return merged;
+}
+
 function setLocalAndSendMessage(sessionDescription) {
   // Set Opus as the preferred codec in SDP if Opus is present.
   sessionDescription.sdp = preferOpus(sessionDescription.sdp);
   pc.setLocalDescription(sessionDescription);
-  console.log('setLocalAndSendMessage sending message' , sessionDescription);
   sendMessage(sessionDescription);
 }
 
@@ -231,10 +326,11 @@ function requestTurn(turn_url) {
 
 function handleRemoteStreamAdded(event) {
   console.log('Remote stream added.');
-  remoteVideo.src = window.URL.createObjectURL(event.stream);
+ // reattachMediaStream(miniVideo, localVideo);
+  attachMediaStream(remoteVideo, event.stream);
   remoteStream = event.stream;
+//  waitForRemoteVideo();
 }
-
 function handleRemoteStreamRemoved(event) {
   console.log('Remote stream removed. Event: ', event);
 }
@@ -246,9 +342,9 @@ function hangup() {
 }
 
 function handleRemoteHangup() {
-//  console.log('Session terminated.');
-  // stop();
-  // isInitiator = false;
+  console.log('Session terminated.');
+  stop();
+  isInitiator = false;
 }
 
 function stop() {
@@ -263,7 +359,6 @@ function stop() {
 
 // Set Opus as the default audio codec if it's present.
 function preferOpus(sdp) {
-  console.info(sdp);
   var sdpLines = sdp.split('\r\n');
   var mLineIndex;
   // Search for m line.
@@ -273,7 +368,7 @@ function preferOpus(sdp) {
         break;
       }
   }
-  if (mLineIndex === null || mLineIndex === undefined) {
+  if (mLineIndex === null || mLineIndex == undefined) {
     return sdp;
   }
 
@@ -288,8 +383,6 @@ function preferOpus(sdp) {
     }
   }
 
-  console.info(mLineIndex);
-  console.info(sdpLines[mLineIndex]);
   // Remove CN in m line and sdp.
   sdpLines = removeCN(sdpLines, mLineIndex);
 
