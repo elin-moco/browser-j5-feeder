@@ -15,20 +15,22 @@ var pc;
 var remoteStream;
 var turnReady;
 
-var pc_config = webrtcDetectedBrowser === 'firefox' ?
-  {'iceServers':[{'url': 'stun:10.247.24.73:3478'}, {'url':'stun:23.21.150.121'}]} : // number IP
-  {'iceServers': [{'url': 'stun:inspire.mozilla.com.tw:3478'}, {'url': 'stun:stun.l.google.com:19302'}]};
+var pc_config = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]};
 
 var pc_constraints = {
-  'optional': [
-    {'DtlsSrtpKeyAgreement': true},
-    {'RtpDataChannels': true}
-  ]};
+  'optional': {
+    'dtlsSrtpKeyAgreement': true,
+    'rtpDataChannels': true
+  }
+};
 
 // Set up audio and video regardless of what devices are present.
-var sdpConstraints = {'mandatory': {
-  'OfferToReceiveAudio':true,
-  'OfferToReceiveVideo':true }};
+var sdpConstraints = {
+  'mandatory': {
+    'offerToReceiveAudio': false,
+    'offerToReceiveVideo': true
+  }
+};
 
 /////////////////////////////////////////////
 
@@ -146,7 +148,8 @@ window.onbeforeunload = function(e){
 
 function createPeerConnection() {
   try {
-    pc = new RTCPeerConnection(pc_config, pc_constraints);
+    //pc = new RTCPeerConnection(pc_config, pc_constraints);
+    pc = new RTCPeerConnection(null);
     pc.onicecandidate = handleIceCandidate;
     console.log('Created RTCPeerConnnection with:\n' +
       '  config: \'' + JSON.stringify(pc_config) + '\';\n' +
@@ -255,11 +258,11 @@ function handleIceCandidate(event) {
 }
 
 function doCall() {
-  var constraints = {'optional': [], 'mandatory': {'MozDontOfferDataChannel': true}};
+  var constraints = {'mandatory': {'mozDontOfferDataChannel': false}};
   // temporary measure to remove Moz* constraints in Chrome
   if (webrtcDetectedBrowser === 'chrome') {
     for (var prop in constraints.mandatory) {
-      if (prop.indexOf('Moz') !== -1) {
+      if (prop.indexOf('moz') !== -1) {
         delete constraints.mandatory[prop];
       }
      }
@@ -267,7 +270,7 @@ function doCall() {
   constraints = mergeConstraints(constraints, sdpConstraints);
   console.log('Sending offer to peer, with constraints: \n' +
     '  \'' + JSON.stringify(constraints) + '\'.');
-  pc.createOffer(setLocalAndSendMessage, null, constraints);
+  pc.createOffer(setLocalAndSendMessage, onPeerConnectionError, constraints);
 }
 
 function doAnswer() {
@@ -284,7 +287,10 @@ function mergeConstraints(cons1, cons2) {
   for (var name in cons2.mandatory) {
     merged.mandatory[name] = cons2.mandatory[name];
   }
-  merged.optional.concat(cons2.optional);
+  //for (var name in cons2.optional) {
+  //  merged.optional[name] = cons2.optional[name];
+  //}
+  //merged.optional.concat(cons2.optional);
   return merged;
 }
 
@@ -298,7 +304,7 @@ function setLocalAndSendMessage(sessionDescription) {
 function requestTurn(turn_url) {
   var turnExists = false;
   for (var i in pc_config.iceServers) {
-    if (pc_config.iceServers[i].url.substr(0, 5) === 'turn:') {
+    if (pc_config.iceServers[i].urls.substr(0, 5) === 'turn:') {
       turnExists = true;
       turnReady = true;
       break;
@@ -313,7 +319,7 @@ function requestTurn(turn_url) {
         var turnServer = JSON.parse(xhr.responseText);
       	console.log('Got TURN server: ', turnServer);
         pc_config.iceServers.push({
-          'url': 'turn:' + turnServer.username + '@' + turnServer.turn,
+          'urls': 'turn:' + turnServer.username + '@' + turnServer.turn,
           'credential': turnServer.password
         });
         turnReady = true;
@@ -368,7 +374,7 @@ function preferOpus(sdp) {
         break;
       }
   }
-  if (mLineIndex === null || mLineIndex == undefined) {
+  if (mLineIndex === null || mLineIndex === undefined) {
     return sdp;
   }
 
