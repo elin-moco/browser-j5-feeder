@@ -28,7 +28,7 @@ var pc_constraints = {
 var sdpConstraints = {
   'mandatory': {
     'offerToReceiveAudio': false,
-    'offerToReceiveVideo': true
+    'offerToReceiveVideo': false
   }
 };
 
@@ -62,6 +62,7 @@ socket.on('join', function (room){
   console.log('Another peer made a request to join room ' + room);
   console.log('This peer is the initiator of room ' + room + '!');
   isChannelReady = true;
+  maybeStart();
 });
 
 socket.on('joined', function (room){
@@ -118,6 +119,9 @@ function handleUserMedia(stream) {
 
 function handleUserMediaError(error){
   console.log('getUserMedia error: ', error);
+  if (isInitiator) {
+    maybeStart();
+  }
 }
 
 var constraints = {video: true};
@@ -130,9 +134,12 @@ if (location.hostname != "localhost") {
 }
 
 function maybeStart() {
-  if (!isStarted && localStream && isChannelReady) {
+  console.info('maybeStart');
+  if (!isStarted && isChannelReady) {
     createPeerConnection();
-    pc.addStream(localStream);
+    if (localStream) {
+      pc.addStream(localStream);
+    }
     isStarted = true;
     if (isInitiator) {
       doCall();
@@ -147,6 +154,7 @@ window.onbeforeunload = function(e){
 /////////////////////////////////////////////////////////
 
 function createPeerConnection() {
+  console.info('createPeerConnection');
   try {
     //pc = new RTCPeerConnection(pc_config, pc_constraints);
     pc = new RTCPeerConnection(null);
