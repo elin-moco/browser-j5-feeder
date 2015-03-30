@@ -195,6 +195,7 @@ function sendData() {
   trace('Sent data: ' + data);
 }
 
+
 // function closeDataChannels() {
 //   trace('Closing data channels');
 //   sendChannel.close();
@@ -226,6 +227,9 @@ function gotReceiveChannel(event) {
 function handleMessage(event) {
   trace('Received message: ' + event.data);
   receiveTextarea.value = event.data;
+  if (window.onRtcMessage) {
+      window.onRtcMessage(event.data);
+  }
 }
 
 function handleSendChannelStateChange() {

@@ -12,14 +12,19 @@
 
 <title>WebRTC client</title>
 
-<!-- <link rel='stylesheet' href='css/main.css' /> -->
-
+<link rel="stylesheet" href="css/chart.css"/>
 </head>
 
 <body>
 
 <div id='container'>
+  <ul>
+    <li>Last Rub: <span id="rubtime"></span><span id="eating">&nbsp;(eating)</span></li>
+    <li>Last Feed: <span id="feedtime"></span><button id="feed-now">Feed Now</button></li>
+  </ul>
+  <div id="stats">
 
+  </div>
   <div id='videos'>
     <video id='localVideo' autoplay muted></video>
     <video id='remoteVideo' autoplay></video>
@@ -33,9 +38,13 @@
   <button id="sendButton" disabled>Send</button>
 
 </div>
-
 <script src='/socket.io/socket.io.js'></script>
 <script src='js/lib/adapter.js'></script>
+<script src='js/lib/jquery-1.11.2.min.js'></script>
+<script src='js/rtc.js'></script>
+<script src='js/lib/d3.v3.js'></script>
+<script src='js/lib/lodash.min.js'></script>
+<script src='js/chart.js'></script>
 <script src='js/main.js'></script>
 
 </body>
