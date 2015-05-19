@@ -73,7 +73,6 @@ d3.json("/api/feed", function(error, feed) {
             }).filter(function(d) {
               return d.time > twoDaysAgo;
             });
-            console.log(hungry);
 
             var data = [{name: 'feed', values: feed}, {name: 'eat', values: hungry}];
             color.domain(data.map(function(d) { return d.name; }));
