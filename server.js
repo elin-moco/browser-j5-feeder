@@ -17,10 +17,12 @@ app.use(allowCrossDomain);
 app.use(express.static('public'));
 app.post('/api/rub', function(req, res) {
   mdb(insertEvent, {'time': new Date(), 'action': 'rub'}, function(result) {
+    console.info(result);
     mdb(findEvents, {query: {action: 'feed'}, sort: {time: -1}, limit: 1}, function(result) {
-      console.info(result);
-      var isTimeToFeed = (new Date().getTime() - result[0]['time'].getTime()) / 1000 / 60 >= 60;
-      res.json({'result': 'success', 'timeToFeed': isTimeToFeed});
+      if (result.length > 0) {
+        var isTimeToFeed = (new Date().getTime() - result[0]['time'].getTime()) / 1000 / 60 >= 60;
+        res.json({'result': 'success', 'timeToFeed': isTimeToFeed});
+      }
     });
   });
 });
