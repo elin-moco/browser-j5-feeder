@@ -29,6 +29,8 @@ var line = d3.svg.line()
 var loadData = function() {
 d3.json("/api/feed", function(error, feed) {
         d3.json("/api/hungry", function(error, hungry) {
+            var twoDaysAgo = new Date();
+            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
             $('#rubtime').text(new Date(hungry.result[hungry.result.length - 1].time).toLocaleString());
             $('#feedtime').text(new Date(feed.result[feed.result.length - 1].time).toLocaleString());
             feed = d3.nest().key(function(d) {
@@ -37,6 +39,8 @@ d3.json("/api/feed", function(error, feed) {
                 return d.length;
             }).entries(feed.result).map(function(d) {
                 return {time: parseDate(d.key), duration: d.values};
+            }).filter(function(d) {
+              return d.time > twoDaysAgo;
             });
 
             hungry = hungry.result.reduce(function(prev, curr, index, arr) {
@@ -66,7 +70,10 @@ d3.json("/api/feed", function(error, feed) {
                 return d3.sum(g, function(e) {return e.duration});
             }).entries(hungry).map(function(d) {
                 return {time: parseDate(d.key), duration: d.values};
+            }).filter(function(d) {
+              return d.time > twoDaysAgo;
             });
+            console.log(hungry);
 
             var data = [{name: 'feed', values: feed}, {name: 'eat', values: hungry}];
             color.domain(data.map(function(d) { return d.name; }));
@@ -110,13 +117,14 @@ d3.json("/api/feed", function(error, feed) {
             .enter().append("g")
               .attr("class", "curve");
 
-            curve.append("path")
+            curve.append("path").transition()
               .attr("class", "line")
               .attr("d", function(d) { return line(d.values); })
               .style("stroke", function(d) { return color(d.name); });
 
             curve.append("text")
               .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
+              .transition()
               .attr("transform", function(d) { return "translate(" + x(d.value.time) + "," + y(d.value.duration) + ")"; })
               .attr("x", 3)
               .attr("dy", ".35em")
