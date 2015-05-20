@@ -31,8 +31,8 @@ d3.json("/api/feed", function(error, feed) {
         d3.json("/api/hungry", function(error, hungry) {
             var twoDaysAgo = new Date();
             twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-            $('#rubtime').text(new Date(hungry.result[hungry.result.length - 1].time).toLocaleString());
-            $('#feedtime').text(new Date(feed.result[feed.result.length - 1].time).toLocaleString());
+            $('#rubtime').text(prettyDate(hungry.result[hungry.result.length - 1].time));
+            $('#feedtime').text(prettyDate(feed.result[feed.result.length - 1].time));
             feed = d3.nest().key(function(d) {
                 return formatDate(new Date(d.time));
             }).rollup(function(d) {

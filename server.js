@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+var bodyParser = require('body-parser');
 
 server.listen(2013);
 
@@ -13,16 +14,43 @@ var allowCrossDomain = function(req, res, next) {
     next();
 }
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(allowCrossDomain);
 app.use(express.static('public'));
 app.post('/api/rub', function(req, res) {
   mdb(insertEvent, {'time': new Date(), 'action': 'rub'}, function(result) {
     console.info(result);
-    mdb(findEvents, {query: {action: 'feed'}, sort: {time: -1}, limit: 1}, function(result) {
-      if (result.length > 0) {
-        var isTimeToFeed = (new Date().getTime() - result[0]['time'].getTime()) / 1000 / 60 >= 60;
-        res.json({'result': 'success', 'timeToFeed': isTimeToFeed});
-      }
+    mdb(findConfigs, {query: {name: 'feed_mode'}}, function(result) {
+      var feedMode = result.length > 0 ? result[0]['value'] : 'all_you_can_eat';
+      mdb(findEvents, {query: {action: 'feed'}, sort: {time: -1}, limit: 1}, function(result) {
+        console.log(feedMode);
+        if (feedMode == 'all_you_can_eat') {
+            res.json({'result': 'success', 'timeToFeed': true});
+        }
+        else if (feedMode == 'fasting') {
+            res.json({'result': 'success', 'timeToFeed': false});
+        }
+        else {
+          if (result.length > 0) {
+            var hour = 1;
+            if (feedMode == 'per_1_hour') {
+              hour = 1;
+            }
+            else if (feedMode == 'per_2_hours') {
+              hour = 2;
+            }
+            else if (feedMode == 'per_3_hours') {
+              hour = 3;
+            }
+            var isTimeToFeed = (new Date().getTime() - result[0]['time'].getTime()) / 1000 / 60 >= hour * 60;
+            res.json({'result': 'success', 'timeToFeed': isTimeToFeed});
+          }
+          else {
+            res.json({'result': 'success', 'timeToFeed': true});
+          }
+        }
+      });
     });
   });
 });
@@ -36,6 +64,18 @@ app.post('/api/feed', function(req, res) {
   mdb(insertEvent, {'time': new Date(), 'action': 'feed'}, function(result) {
     console.info(result);
     res.json({'result': 'success'});
+  });
+});
+app.post('/api/configs', function(req, res) {
+  mdb(updateConfigs, {query: {'name': req.body.name}, data: {'time': new Date(), 'name': req.body.name, 'value': req.body.value}}, function(result) {
+    console.info(result);
+    res.json({'result': 'success'});
+  });
+});
+app.get('/api/configs', function(req, res){
+  mdb(findConfigs, {query: {name: req.query.name}}, function(result) {
+    console.info(result);
+    res.json({'result': result});
   });
 });
 app.get('/api/hungry', function(req, res){
@@ -80,6 +120,32 @@ var insertEvent = function(db, callback, e) {
     console.log("Inserted event into the events collection");
     callback(result);
   });
+};
+
+var findConfigs = function(db, callback, e) {
+  var q = e.query ? e.query : {};
+  // Get the documents collection
+  var collection = db.collection('configs');
+  // Find some documents
+  collection.find(q).toArray(function(err, configs) {
+    console.log("Found the following records");
+    console.info(configs)
+    callback(configs);
+  });      
+};
+
+var updateConfigs = function(db, callback, e) {
+  // Get the documents collection
+  var collection = db.collection('configs');
+  // Insert some documents
+  collection.update(
+    e.query, 
+    e.data, 
+    {upsert: true},
+    function(err, result) {
+      console.log("Updated config into the configs collection");
+      callback(result);
+    });
 };
 
 function mdb(handler, entity, callback) {
