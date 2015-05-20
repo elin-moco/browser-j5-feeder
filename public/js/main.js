@@ -4,11 +4,11 @@ $('#feed-now').click(function() {
 
 window.onRtcMessage = function(msg) {
   if ('rub' == msg) {
-    $('#eating').show();
+    $('#eating').text('(Eating)');
   }
   else if ('leave' == msg) {
     loadData();
-    $('#eating').hide();
+    $('#eating').text('(Not Eating)');
   }
   else if ('feed' == msg) {
     loadData();
