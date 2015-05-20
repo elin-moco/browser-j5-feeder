@@ -34,6 +34,9 @@ $('#feedmode').change(function() {
 
 $.get('/api/configs', {'name': 'feed_mode'}, function(response) {
   var feedMode = response.result[0].value;
+  if (response.result.length > 0) {
+    feedMode = 'all_you_can_eat';
+  }
   $('#feedmode-label').text(feedModeMap[feedMode]);
   $('#feedmode').val(feedModes.indexOf(feedMode));
 });
