@@ -22,6 +22,10 @@ app.post('/api/rub', function(req, res) {
   mdb(insertEvent, {'time': new Date(), 'action': 'rub'}, function(result) {
     console.info(result);
     mdb(findConfigs, {query: {name: 'feed_mode'}}, function(result) {
+      if (!result) {
+        res.json({'result': 'failed', 'timeToFeed': false});
+        return;
+      }
       var feedMode = result.length > 0 ? result[0]['value'] : 'all_you_can_eat';
       mdb(findEvents, {query: {action: 'feed'}, sort: {time: -1}, limit: 1}, function(result) {
         console.log(feedMode);
@@ -111,6 +115,7 @@ var findEvents = function(db, callback, e) {
     });
   }
   else {
+    callback([]);
     console.error('DB not found!');
   }
 };
@@ -128,6 +133,7 @@ var insertEvent = function(db, callback, e) {
     });
   }
   else {
+    callback();
     console.error('DB not found!');
   }
 };
@@ -145,6 +151,7 @@ var findConfigs = function(db, callback, e) {
     });
   }
   else {
+    callback([]);
     console.error('DB not found!');
   }
 };
@@ -164,12 +171,14 @@ var updateConfigs = function(db, callback, e) {
       });
   }
   else {
+    callback();
     console.error('DB not found!');
   }
 };
 
+var MongoClient = require('mongodb').MongoClient;
+
 function mdb(handler, entity, callback) {
-  var MongoClient = require('mongodb').MongoClient;
 
   // Connection URL
   var url = 'mongodb://localhost:27017/catfeeder';
