@@ -18,18 +18,30 @@
 <body>
 
 <div id='container'>
-  <ul>
-    <li>Connection: <span id="rtc-status">Disconnected</span></li>
-    <li>Last Rub: <span id="rubtime"></span>&nbsp;<span id="eating">(Not Eating)</span></li>
-    <li>Last Feed: <span id="feedtime"></span><button id="feed-now">Feed Now</button></li>
-    <li>Feed Mode: <input id="feedmode" name="feedmode" type="range" max="4" min="0" value="0"><label id="feedmode-label" for="feedmode"></label></li>
-  </ul>
-  <div id="stats">
-
+  <div id="status">
+    <ul id="info">
+      <li><b>Connection: </b>
+        <span id="rtc-status">Disconnected</span>
+      </li>
+      <li><b>Last Rub: </b>
+        <span id="rubtime"></span>
+        <span id="eating">(Not Eating)</span>
+      </li>
+      <li><b>Last Feed: </b>
+        <span id="feedtime"></span>
+        <button id="feed-now">Feed Now</button>
+      </li>
+      <li><b>Feed Mode: </b>
+        <input id="feedmode" name="feedmode" type="range" max="4" min="0" value="0">
+        <label id="feedmode-label" for="feedmode"></label>
+      </li>
+    </ul>
+    <div id='videos'>
+      <video id='localVideo' autoplay muted></video>
+      <video id='remoteVideo' autoplay></video>
+    </div>
   </div>
-  <div id='videos'>
-    <video id='localVideo' autoplay muted></video>
-    <video id='remoteVideo' autoplay></video>
+  <div id="stats">
   </div>
 
   <div id='textareas'>
@@ -37,7 +49,6 @@
 		<textarea id="dataChannelReceive" disabled></textarea>
     <button id="sendButton" disabled>Send</button>
 	</div>
-
 
 </div>
 <script src='/socket.io/socket.io.js'></script>

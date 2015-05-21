@@ -2,6 +2,15 @@ body {
   /*font: 10px sans-serif;*/
 }
 
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+ul li {
+   padding: 5px 10px;
+}
+
 .axis path,
 .axis line {
   fill: none;
@@ -19,12 +28,35 @@ body {
   stroke-width: 1.5px;
 }
 
-#videos {
-    position: fixed;
-    right: 0;
-    top: 0;
-}
-
 #textareas {
     display: none;
+}
+
+#container {
+    text-align: center;
+}
+
+#status {
+    display: inline-block;
+    vertical-align: top;
+    width: 260px;
+}
+
+#info, #videos {
+    display: inline-block;
+    text-align: left;
+}
+
+#stats {
+    display: inline-block;
+}
+
+#eating, #feed-now, #feedmode, #feedmode-label {
+    display: block;
+    text-align: center;
+    width: 100%;
+}
+
+#feed-now {
+    height: 36px;
 }

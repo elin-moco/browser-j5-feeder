@@ -177,17 +177,19 @@ var updateConfigs = function(db, callback, e) {
 };
 
 var MongoClient = require('mongodb').MongoClient;
-
+var url = 'mongodb://localhost:27017/catfeeder';
+var db = null;
+MongoClient.connect(url, function(err, database) {
+  console.log("Connected correctly to server");
+  db = database;
+});
 function mdb(handler, entity, callback) {
-
-  // Connection URL
-  var url = 'mongodb://localhost:27017/catfeeder';
-  // Use connect method to connect to the Server
-  MongoClient.connect(url, function(err, db) {
-    console.log("Connected correctly to server");
-
+  if (db) {
     handler(db, callback, entity);
-  });
+  }
+  else {
+    console.error('DB not initialized.');
+  }
 }
 
 io.on('connection', function (socket){
