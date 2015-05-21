@@ -19,6 +19,7 @@
 
 <div id='container'>
   <ul>
+    <li>Connection: <span id="rtc-status">Disconnected</span></li>
     <li>Last Rub: <span id="rubtime"></span>&nbsp;<span id="eating">(Not Eating)</span></li>
     <li>Last Feed: <span id="feedtime"></span><button id="feed-now">Feed Now</button></li>
     <li>Feed Mode: <input id="feedmode" name="feedmode" type="range" max="4" min="0" value="0"><label id="feedmode-label" for="feedmode"></label></li>
@@ -34,9 +35,9 @@
   <div id='textareas'>
 		<textarea id="dataChannelSend" disabled placeholder="Press Start, enter some text, then press Send."></textarea>
 		<textarea id="dataChannelReceive" disabled></textarea>
+    <button id="sendButton" disabled>Send</button>
 	</div>
 
-  <button id="sendButton" disabled>Send</button>
 
 </div>
 <script src='/socket.io/socket.io.js'></script>

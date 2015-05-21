@@ -18,3 +18,13 @@ body {
   stroke: steelblue;
   stroke-width: 1.5px;
 }
+
+#videos {
+    position: fixed;
+    right: 0;
+    top: 0;
+}
+
+#textareas {
+    display: none;
+}

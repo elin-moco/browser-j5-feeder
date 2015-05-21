@@ -13,6 +13,11 @@ window.onRtcMessage = function(msg) {
   else if ('feed' == msg) {
     loadData();
   }
+  else if (msg.substr(0, 5) == 'mode:') {
+    var mode = msg.substr(5);
+    $('#feedmode').val(feedModes.indexOf(mode));
+    $('#feedmode-label').text(feedModeMap[mode]);
+  }
 };
 
 var feedModes = ['fasting', 'per_3_hours', 'per_2_hours', 'per_1_hour', 'all_you_can_eat'];
@@ -28,14 +33,17 @@ var feedModeMap = {
 $('#feedmode').change(function() {
   var feedMode = feedModes[this.value];
   $.post('/api/configs', {name: 'feed_mode', value: feedMode}, function(response) {
-    $('#feedmode-label').text(feedModeMap[feedMode]);
+    if (response.result == 'success') {
+      $('#feedmode-label').text(feedModeMap[feedMode]);
+      sendChannel.send('mode:' + feedMode);
+    }
   });
 });
 
 $.get('/api/configs', {'name': 'feed_mode'}, function(response) {
-  var feedMode = response.result[0].value;
+  var feedMode = 'all_you_can_eat';
   if (response.result.length > 0) {
-    feedMode = 'all_you_can_eat';
+    feedMode = response.result[0].value;
   }
   $('#feedmode-label').text(feedModeMap[feedMode]);
   $('#feedmode').val(feedModes.indexOf(feedMode));

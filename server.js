@@ -12,7 +12,7 @@ var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Headers', 'Content-Type');
 
     next();
-}
+};
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -101,51 +101,71 @@ var findEvents = function(db, callback, e) {
   var s = e.sort ? e.sort : {};
   var l = e.limit ? e.limit : 0;
   // Get the documents collection
-  var collection = db.collection('events');
-  // Find some documents
-  collection.find(q).sort(s).limit(l).toArray(function(err, events) {
-    console.log("Found the following records");
-    console.info(events)
-    callback(events);
-  });      
+  if (db) {
+    var collection = db.collection('events');
+    // Find some documents
+    collection.find(q).sort(s).limit(l).toArray(function(err, events) {
+      console.log("Found the following records");
+      console.info(events)
+      callback(events);
+    });
+  }
+  else {
+    console.error('DB not found!');
+  }
 };
 
 var insertEvent = function(db, callback, e) {
   // Get the documents collection
-  var collection = db.collection('events');
-  // Insert some documents
-  collection.insert([
-    e
-  ], function(err, result) {
-    console.log("Inserted event into the events collection");
-    callback(result);
-  });
+  if (db) {
+    var collection = db.collection('events');
+    // Insert some documents
+    collection.insert([
+      e
+    ], function(err, result) {
+      console.log("Inserted event into the events collection");
+      callback(result);
+    });
+  }
+  else {
+    console.error('DB not found!');
+  }
 };
 
 var findConfigs = function(db, callback, e) {
   var q = e.query ? e.query : {};
   // Get the documents collection
-  var collection = db.collection('configs');
-  // Find some documents
-  collection.find(q).toArray(function(err, configs) {
-    console.log("Found the following records");
-    console.info(configs)
-    callback(configs);
-  });      
+  if (db) {
+    var collection = db.collection('configs');
+    // Find some documents
+    collection.find(q).toArray(function(err, configs) {
+      console.log("Found the following records");
+      console.info(configs)
+      callback(configs);
+    });
+  }
+  else {
+    console.error('DB not found!');
+  }
 };
 
 var updateConfigs = function(db, callback, e) {
   // Get the documents collection
-  var collection = db.collection('configs');
-  // Insert some documents
-  collection.update(
-    e.query, 
-    e.data, 
-    {upsert: true},
-    function(err, result) {
-      console.log("Updated config into the configs collection");
-      callback(result);
-    });
+  if (db) {
+    var collection = db.collection('configs');
+    // Insert some documents
+    collection.update(
+      e.query,
+      e.data,
+      {upsert: true},
+      function(err, result) {
+        console.log("Updated config into the configs collection");
+        callback(result);
+      });
+  }
+  else {
+    console.error('DB not found!');
+  }
 };
 
 function mdb(handler, entity, callback) {

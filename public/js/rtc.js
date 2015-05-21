@@ -105,11 +105,12 @@ socket.on('message', function (message){
 ////////////////////////////////////////////////////
 
 var localVideo = document.querySelector('#localVideo');
+localVideo.style.display = 'none';
 var remoteVideo = document.querySelector('#remoteVideo');
 
 function handleUserMedia(stream) {
   localStream = stream;
-  attachMediaStream(localVideo, stream);
+//  attachMediaStream(localVideo, stream);
   console.log('Adding local stream.');
   sendMessage('got user media');
   if (isInitiator) {
@@ -129,9 +130,9 @@ var constraints = {video: true};
 getUserMedia(constraints, handleUserMedia, handleUserMediaError);
 console.log('Getting user media with constraints', constraints);
 
-if (location.hostname != "localhost") {
-  requestTurn('http://inspire.mozilla.com.tw:8765/?service=turn&username=root&key=0d2d014fc0a8920418c2dba8f965a685');
-}
+//if (location.hostname != "localhost") {
+//  requestTurn('http://inspire.mozilla.com.tw:8765/?service=turn&username=root&key=0d2d014fc0a8920418c2dba8f965a685');
+//}
 
 function maybeStart() {
   console.info('maybeStart');
@@ -149,7 +150,7 @@ function maybeStart() {
 
 window.onbeforeunload = function(e){
 	sendMessage('bye');
-}
+};
 
 /////////////////////////////////////////////////////////
 
@@ -244,15 +245,19 @@ function handleReceiveChannelStateChange() {
   enableMessageInterface(readyState == "open");
 }
 
+var rtcStatus = document.getElementById('rtc-status');
+
 function enableMessageInterface(shouldEnable) {
   if (shouldEnable) {
     dataChannelSend.disabled = false;
-    dataChannelSend.focus();
+//    dataChannelSend.focus();
     dataChannelSend.placeholder = "";
     sendButton.disabled = false;
+    rtcStatus.textContent = 'Connected';
   } else {
     dataChannelSend.disabled = true;
     sendButton.disabled = true;
+    rtcStatus.textContent = 'Disconnected';
   }
 }
 
