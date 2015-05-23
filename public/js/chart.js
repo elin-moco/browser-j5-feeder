@@ -138,7 +138,6 @@ d3.json("/api/feed", function(error, feed) {
 
             curve.append("text")
               .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
-              .transition()
               .attr("transform", function(d) { return "translate(" + x(d.value.time) + "," + y(d.value.duration) + ")"; })
               .attr("x", 3)
               .attr("dy", ".35em")
