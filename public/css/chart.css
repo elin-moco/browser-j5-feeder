@@ -60,9 +60,12 @@ ul li {
 #feed-now {
     height: 36px;
 }
-
+#info {
+    padding-bottom: 40px;
+}
 #videos {
     position: relative;
+    transform: rotate(90deg);
 }
 #videos:after {
     content: " ";

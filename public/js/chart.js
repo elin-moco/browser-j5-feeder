@@ -26,13 +26,28 @@ var line = d3.svg.line()
     .x(function(d) { return x(d.time); })
     .y(function(d) { return y(d.duration); });
 
+var $feedTime = $('#feedtime');
+var $rubTime = $('#rubtime');
+setInterval(function() {
+  var lastFeed = $feedTime.attr('title');
+  if (lastFeed) {
+    $feedTime.text(prettyDate(lastFeed));
+  }
+  var lastRub = $rubTime.attr('title');
+  if (lastRub) {
+    $rubTime.text(prettyDate(lastRub));
+  }
+}, 60 * 1000);
+
 var loadData = function() {
 d3.json("/api/feed", function(error, feed) {
         d3.json("/api/hungry", function(error, hungry) {
             var twoDaysAgo = new Date();
             twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-            $('#rubtime').text(prettyDate(hungry.result[hungry.result.length - 1].time));
-            $('#feedtime').text(prettyDate(feed.result[feed.result.length - 1].time));
+            $rubTime.attr('title', hungry.result[hungry.result.length - 1].time);
+            $rubTime.text(prettyDate($rubTime.attr('title')));
+            $feedTime.attr('title', feed.result[feed.result.length - 1].time);
+            $feedTime.text(prettyDate($feedTime.attr('title')));
             feed = d3.nest().key(function(d) {
                 return formatDate(new Date(d.time));
             }).rollup(function(d) {
