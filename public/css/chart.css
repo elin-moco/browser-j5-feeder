@@ -1,5 +1,5 @@
 body {
-  /*font: 10px sans-serif;*/
+    /*font: 10px sans-serif;*/
 }
 
 ul {
@@ -8,24 +8,34 @@ ul {
 }
 
 ul li {
-   padding: 5px 10px;
+    padding: 5px 10px;
 }
 
 .axis path,
 .axis line {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
 }
 
 .x.axis path {
-  display: none;
+    display: none;
+}
+
+.grid .tick {
+    stroke: white;
+    shape-rendering: crispEdges;
+}
+
+.grid path {
+    stroke-width: 0;
 }
 
 .line {
-  fill: none;
-  stroke: steelblue;
-  stroke-width: 1.5px;
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5px;
 }
 
 #textareas {
@@ -51,22 +61,97 @@ ul li {
     display: inline-block;
 }
 
-#eating, #feed-now, #feedmode, #feedmode-label {
+#eating, #feed-now, #feedmode {
     display: block;
     text-align: center;
-    width: 100%;
+    width: 90%;
+}
+
+#eating {
+    position: relative;
+    background: #D7D3C8;
+    border-radius: 5px;
+    font-size: 13px;
+    width: 100px;
+    padding: 5px 10px;
+    margin-top: 10px;
+    margin-left: 60px;
+}
+#eating:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -10px;
+    left: 40px;
+    height: 5px;
+    border-left: 5px solid transparent;
+    border-bottom: 5px solid #D7D3C8;
+    border-right: 5px solid transparent;
+}
+
+#info > li > b {
+    display: inline-block;
+    width: 100px;
+}
+#feedmode-label {
+    display: inline-block;
+    width: 120px;
+}
+#connection {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    border-radius: 5px;
+    vertical-align: middle;
+}
+#connection.disconnected {
+    background-image: url('/img/disconnect.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #C13832;
+}
+#connection.connected {
+    background-image: url('/img/connect.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #0095DD;
 }
 
 #feed-now {
+    background: #0095DD;
     height: 36px;
+    color: #FFFFFF;
+    border: none;
+    vertical-align: middle;
+    border-radius: 5px;
+    font-size: 13px;
 }
+#feed-now:hover {
+    background: #00acff;
+}
+#feed-now:active {
+    background: #007bb5;
+}
+
+#feed-now:before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    background: url("/img/feed.png");
+    vertical-align: middle;
+}
+
 #info {
-    padding-bottom: 40px;
+    /*padding-bottom: 40px;*/
 }
+
 #videos {
     position: relative;
-    transform: rotate(90deg);
+    /*transform: rotate(90deg);*/
 }
+
 #videos:after {
     content: " ";
     position: absolute;

@@ -245,6 +245,7 @@ function handleReceiveChannelStateChange() {
   enableMessageInterface(readyState == "open");
 }
 
+var connStatus = document.getElementById('connection');
 var rtcStatus = document.getElementById('rtc-status');
 
 function enableMessageInterface(shouldEnable) {
@@ -254,10 +255,12 @@ function enableMessageInterface(shouldEnable) {
     dataChannelSend.placeholder = "";
     sendButton.disabled = false;
     rtcStatus.textContent = 'Connected';
+    connStatus.className = 'connected';
   } else {
     dataChannelSend.disabled = true;
     sendButton.disabled = true;
     rtcStatus.textContent = 'Disconnected';
+    connStatus.className = 'disconnected';
   }
 }
 

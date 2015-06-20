@@ -10,7 +10,7 @@
 
 <base target='_blank'>
 
-<title>WebRTC client</title>
+<title>CatFeeder Server</title>
 
 <link rel="stylesheet" href="css/chart.css"/>
 </head>
@@ -20,20 +20,20 @@
 <div id='container'>
   <div id="status">
     <ul id="info">
-      <li><b>Connection: </b>
+      <li><span id="connection" class="disconnected"></span>
         <span id="rtc-status">Disconnected</span>
       </li>
       <li><b>Last Rub: </b>
         <span id="rubtime"></span>
-        <span id="eating">(Not Eating)</span>
+        <span id="eating">Not Eating</span>
       </li>
       <li><b>Last Feed: </b>
         <span id="feedtime"></span>
         <button id="feed-now">Feed Now</button>
       </li>
-      <li><b>Feed Mode: </b>
+      <li><b>Feed Mode: </b><label id="feedmode-label" for="feedmode"></label>
         <input id="feedmode" name="feedmode" type="range" max="4" min="0" value="0">
-        <label id="feedmode-label" for="feedmode"></label>
+
       </li>
     </ul>
     <div id='videos'>
