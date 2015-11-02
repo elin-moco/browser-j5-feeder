@@ -1,0 +1,29 @@
+{
+  "name": "browser-j5-feeder",
+  "version": "0.0.1",
+  "authors": [
+    "Eddie Lin <elin@mozilla.com>"
+  ],
+  "description": "A browser johnny five demo to control arduino feeder via BLE.",
+  "main": "index.html",
+  "keywords": [
+    "cordova",
+    "johnny",
+    "five",
+    "arduino",
+    "firefoxos",
+    "phonegap"
+  ],
+  "license": "MPL 2.0",
+  "homepage": "http://github.com/elin-moco/browser-j5-feeder/",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "serialport-io": "~0.1.7"
+  }
+}

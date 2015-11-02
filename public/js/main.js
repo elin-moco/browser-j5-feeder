@@ -1,24 +1,65 @@
-$('#feed-now').click(function() {
-    sendChannel.send('feed');
+
+var socket = io(CONFIG.SOCKET_IO_SERVER);
+
+var bsp = new SocketIoSerialPort({
+  client: socket,
+  device: {   //put your device channel/address here
+    channel: 'ble',
+    name: CONFIG.DEVICE_NAME,
+    address: CONFIG.DEVICE_ADDRESS
+  }
 });
 
-window.onRtcMessage = function(msg) {
-  if ('rub' == msg) {
-    $('#eating').text('Eating');
-  }
-  else if ('leave' == msg) {
-    loadData();
-    $('#eating').text('Not Eating');
-  }
-  else if ('feed' == msg) {
-    loadData();
-  }
-  else if (msg.substr(0, 5) == 'mode:') {
-    var mode = msg.substr(5);
-    $('#feedmode').val(feedModes.indexOf(mode));
-    $('#feedmode-label').text(feedModeMap[mode]);
-  }
-};
+bsp.connect().then(function() {
+  console.log('BSP connected');
+  var board = new five.Board({port: bsp, repl: false});
+  board.on('ready', function() {
+    console.log('Arduino connected!');
+    window.led = new five.Led(2);
+    window.btn = new five.Button(4);
+    window.servo = new five.Servo(5);
+
+    var feedCat = function() {
+      servo.to(150);
+      setTimeout(function() {
+        servo.to(0);
+      }, 1000);
+      loadData();
+    };
+
+    led.on();
+
+    btn.on("press", function() {
+      console.log('button pressed');
+      feedCat();
+    });
+    var prox = new five.Proximity({
+      controller: "GP2Y0A41SK0F",
+      pin: "A5",
+      freq: 5000
+    });
+    prox.on('data', function() {
+      console.log(this.cm);
+      if (this.cm < CONFIG.EATING_THRESHOLD) {
+        $.post('/api/rub', function(response) {
+          console.info(response);
+          if (response.timeToFeed) {
+            feedCat();
+          }
+        });
+
+        loadData();
+        $('#eating').text('Not Eating');
+      } else {
+        $.post('/api/leave');
+        $('#eating').text('Eating');
+      }
+    });
+
+    $('#feed-now').click(feedCat);
+
+  });
+});
 
 var feedModes = ['fasting', 'per_3_hours', 'per_2_hours', 'per_1_hour', 'all_you_can_eat'];
 
@@ -35,7 +76,6 @@ $('#feedmode').change(function() {
   $.post('/api/configs', {name: 'feed_mode', value: feedMode}, function(response) {
     if (response.result == 'success') {
       $('#feedmode-label').text(feedModeMap[feedMode]);
-      sendChannel.send('mode:' + feedMode);
     }
   });
 });

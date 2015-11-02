@@ -43,6 +43,9 @@ setInterval(function() {
 var loadData = function() {
 d3.json("/api/feed", function(error, feed) {
         d3.json("/api/hungry", function(error, hungry) {
+            if (!hungry || !feed || !hungry.result|| !feed.result || hungry.result.length == 0 || feed.result.length == 0) {
+                return
+            }
             var twoDaysAgo = new Date();
             twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
             $rubTime.attr('title', hungry.result[hungry.result.length - 1].time);
