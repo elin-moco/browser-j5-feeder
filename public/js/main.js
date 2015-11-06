@@ -1,26 +1,50 @@
-
 var socket = io(CONFIG.SOCKET_IO_SERVER);
 
 var bsp = new SocketIoSerialPort({
   client: socket,
   device: {   //put your device channel/address here
+    //channel: 'serial',
+    //address: '/dev/cu.usbmodem1411'
     channel: 'ble',
     name: CONFIG.DEVICE_NAME,
     address: CONFIG.DEVICE_ADDRESS
   }
 });
+var connStatus = document.getElementById('connection');
+var rtcStatus = document.getElementById('rtc-status');
+
+function changeConnectionState(state) {
+  if (state) {
+    dataChannelSend.placeholder = "";
+    rtcStatus.textContent = 'Connected';
+    connStatus.className = 'connected';
+  } else {
+    rtcStatus.textContent = 'Disconnected';
+    connStatus.className = 'disconnected';
+  }
+}
 
 bsp.connect().then(function() {
   console.log('BSP connected');
   var board = new five.Board({port: bsp, repl: false});
   board.on('ready', function() {
     console.log('Arduino connected!');
-    window.led = new five.Led(2);
-    window.btn = new five.Button(4);
-    window.servo = new five.Servo(5);
+    changeConnectionState(true);
+    var led = new five.Led(7);
+    var btn = new five.Button(2);
+    var servo = new five.Servo({
+      pin: 3,
+      startAt: 0
+    });
+    var prox = new five.Proximity({
+      controller: "GP2Y0A41SK0F",
+      pin: "A5",
+      freq: 1000
+    });
 
-    var feedCat = function() {
-      servo.to(150);
+    var feedNow = function() {
+      $.toast('Feeding...');
+      servo.to(108);
       setTimeout(function() {
         servo.to(0);
       }, 1000);
@@ -30,34 +54,42 @@ bsp.connect().then(function() {
     led.on();
 
     btn.on("press", function() {
-      console.log('button pressed');
-      feedCat();
-    });
-    var prox = new five.Proximity({
-      controller: "GP2Y0A41SK0F",
-      pin: "A5",
-      freq: 5000
+      feedNow();
     });
     prox.on('data', function() {
-      console.log(this.cm);
-      if (this.cm < CONFIG.EATING_THRESHOLD) {
+      if (this.cm > 0 && this.cm < CONFIG.EATING_THRESHOLD) {
+        console.log(this.cm);
         $.post('/api/rub', function(response) {
           console.info(response);
           if (response.timeToFeed) {
-            feedCat();
+            feedNow();
           }
         });
-
+        $('#eating').text('Eating');
         loadData();
-        $('#eating').text('Not Eating');
       } else {
         $.post('/api/leave');
-        $('#eating').text('Eating');
+        $('#eating').text('Not Eating');
       }
     });
 
-    $('#feed-now').click(feedCat);
+    $('#feed-now').click(feedNow);
 
+    try {
+      var feed_commands = ['I\'m hungry', 'feed me', 'feed now', 'please feed', 'feed please', 'feed', 'hungry'];
+      var listener = new AudioListener();
+      listener.listen("en", function(command) {
+        command = command.trim();
+        if (feed_commands.indexOf(command) >= 0) {
+          feedNow();
+          $.toast({text: 'Voice command: <br>&emsp;<em>\''+command+'\'</em>', bgColor: '#0095DD'});
+        } else {
+          $.toast({text: 'Unknown voice command: <br>&emsp;<em>\''+command+'\'</em>', bgColor: '#C13832'});
+        }
+      });
+    } catch (e) {
+      console.error(e);
+    }
   });
 });
 

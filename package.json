@@ -16,7 +16,7 @@
     "iot"
   ],
   "author": "elin",
-  "license": "MPL",
+  "license": "MPL-2.0",
   "dependencies": {
     "body-parser": "^1.14.1",
     "express": "~4.12.3",

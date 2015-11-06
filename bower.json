@@ -14,7 +14,7 @@
     "firefoxos",
     "phonegap"
   ],
-  "license": "MPL 2.0",
+  "license": "MPL-2.0",
   "homepage": "http://github.com/elin-moco/browser-j5-feeder/",
   "ignore": [
     "**/.*",
@@ -24,6 +24,8 @@
     "tests"
   ],
   "dependencies": {
-    "serialport-io": "~0.1.7"
+    "jquery-toast-plugin": "*",
+    "serialport-io": "~0.1.7",
+    "webspeech": "*"
   }
 }
